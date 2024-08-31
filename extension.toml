@@ -1,0 +1,11 @@
+id = "haxe"
+name = "Haxe language support"
+version = "0.0.1"
+schema_version = 1
+authors = ["Frixuu <kontakt@lukasz.xyz>"]
+description = "Highlighting support for the Haxe programming language"
+repository = "https://github.com/Frixuu/Zed-Haxe"
+
+[grammars.haxe]
+repository = "https://github.com/vantreeseba/tree-sitter-haxe"
+commit = "5f7a2e09b5885d2aa6d60d2d6e5a9de3823e813c"

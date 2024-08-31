@@ -1,0 +1,4 @@
+name = "Haxe"
+grammar = "haxe"
+path_suffixes = ["hx"]
+line_comments = ["// "]
