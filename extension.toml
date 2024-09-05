@@ -1,9 +1,9 @@
 id = "haxe"
 name = "Haxe language support"
-version = "0.0.1"
+version = "0.0.2"
 schema_version = 1
 authors = ["Frixuu <kontakt@lukasz.xyz>"]
-description = "Highlighting support for the Haxe programming language"
+description = "Unofficial Haxe programming language support."
 repository = "https://github.com/Frixuu/Zed-Haxe"
 
 [grammars.haxe]

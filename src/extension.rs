@@ -1,7 +1,12 @@
 use std::{env, path::PathBuf};
 
 use zed::{Command, LanguageServerId, Worktree};
-use zed_extension_api::{self as zed, serde_json::json, Result};
+use zed_extension_api::{
+    self as zed,
+    serde_json::{Map, Value},
+    settings::LspSettings,
+    Result,
+};
 
 use crate::language_server::{self};
 
@@ -47,10 +52,38 @@ impl zed::Extension for HaxeExtension {
 
     fn language_server_initialization_options(
         &mut self,
-        _language_server_id: &LanguageServerId,
-        _worktree: &Worktree,
+        _id: &LanguageServerId,
+        worktree: &Worktree,
     ) -> Result<Option<zed::serde_json::Value>> {
-        Ok(Some(json!({ "displayArguments": ["build.hxml"] })))
+        let lsp_settings = LspSettings::for_worktree("haxe-language-server", worktree).ok();
+
+        let mut init_settings = lsp_settings
+            .as_ref()
+            .map(|s| s.initialization_options.clone())
+            .flatten()
+            .unwrap_or_else(|| Value::Object(Map::new()));
+
+        let server_settings = lsp_settings
+            .as_ref()
+            .map(|s| s.settings.clone())
+            .flatten()
+            .unwrap_or_else(|| Value::Object(Map::new()));
+
+        let config_file = server_settings
+            .get("configuration-file")
+            .map(|v| v.as_str())
+            .flatten();
+
+        match (init_settings.get("displayArguments"), config_file) {
+            (None, None) => Some("build.hxml"),
+            (_, Some(file)) => Some(file),
+            (Some(_), None) => None,
+        }
+        .inspect(|f| {
+            init_settings["displayArguments"] = Value::Array(vec![Value::String((*f).to_owned())]);
+        });
+
+        Ok(Some(init_settings))
     }
 }
 
