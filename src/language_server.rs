@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use const_format::formatcp;
 use zed::{DownloadedFileType, LanguageServerInstallationStatus::*};
 use zed_extension_api::{self as zed, LanguageServerId, LanguageServerInstallationStatus};
 
@@ -8,13 +7,13 @@ pub const MARKETPLACE_API_URL: &str = "https://marketplace.visualstudio.com/_api
 pub const VSHAXE_AUTHOR: &str = "nadako";
 pub const VSHAXE_NAME: &str = "vshaxe";
 pub const VSHAXE_VERSION: &str = "2.32.1";
-pub const VSHAXE_DOWNLOAD_URL: &str = formatcp!(
-    "{url}/gallery/publishers/{author}/vsextensions/{name}/{version}/vspackage",
-    url = MARKETPLACE_API_URL,
-    author = VSHAXE_AUTHOR,
-    name = VSHAXE_NAME,
-    version = VSHAXE_VERSION
-);
+
+fn download_url(version: &str) -> String {
+    format!(
+        "{}/gallery/publishers/{}/vsextensions/{}/{}/vspackage",
+        MARKETPLACE_API_URL, VSHAXE_AUTHOR, VSHAXE_NAME, version
+    )
+}
 
 /// If an ID of a language server is provided, sets this server's installation status.
 fn set_maybe_status(id: Option<&LanguageServerId>, status: &LanguageServerInstallationStatus) {
@@ -23,22 +22,34 @@ fn set_maybe_status(id: Option<&LanguageServerId>, status: &LanguageServerInstal
     }
 }
 
-/// Forcefully downloads the latest known version of the language server.
-pub fn download_fresh(id: Option<&LanguageServerId>) -> Result<PathBuf, String> {
+/// Forcefully downloads a specified version of the language server.
+pub fn download_fresh(id: Option<&LanguageServerId>, version: &str) -> Result<PathBuf, String> {
     set_maybe_status(id, &Downloading);
     zed::download_file(
-        VSHAXE_DOWNLOAD_URL,
-        formatcp!("vshaxe-{VSHAXE_VERSION}"),
+        download_url(version).as_ref(),
+        format!("vshaxe-{version}").as_ref(),
         DownloadedFileType::Zip, //.vsix are zips
     )?;
-    // WASM sandbox does not permit us to query the filesystem, assume download succeeded
     set_maybe_status(id, &None);
-    Ok(instance_dir_path())
+    Ok(instance_dir_path(version))
 }
 
-pub fn instance_dir_path() -> PathBuf {
+pub fn is_version_installed(version: &str) -> bool {
+    let path = instance_dir_path(version);
+    std::fs::metadata(&path).map_or(false, |s| s.is_dir())
+}
+
+pub fn download_if_missing(id: Option<&LanguageServerId>) -> Result<PathBuf, String> {
+    if is_version_installed(VSHAXE_VERSION) {
+        Ok(instance_dir_path(VSHAXE_VERSION))
+    } else {
+        download_fresh(id, VSHAXE_VERSION)
+    }
+}
+
+pub fn instance_dir_path(version: &str) -> PathBuf {
     let mut path = crate::extension::working_dir();
-    path.push(formatcp!("vshaxe-{VSHAXE_VERSION}"));
+    path.push(format!("vshaxe-{version}"));
     path.push("extension");
     path
 }

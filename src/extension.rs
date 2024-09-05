@@ -30,9 +30,7 @@ impl zed::Extension for HaxeExtension {
         id: &LanguageServerId,
         _wt: &Worktree,
     ) -> Result<Command> {
-        if self.language_server_dir.is_none() {
-            self.language_server_dir = Some(language_server::download_fresh(Some(id))?);
-        }
+        self.language_server_dir = Some(language_server::download_if_missing(Some(id))?);
 
         let server_bin_path = self
             .language_server_dir
