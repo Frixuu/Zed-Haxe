@@ -61,25 +61,10 @@ impl zed::Extension for HaxeExtension {
             .flatten()
             .unwrap_or_else(|| Value::Object(Map::new()));
 
-        let server_settings = lsp_settings
-            .as_ref()
-            .map(|s| s.settings.clone())
-            .flatten()
-            .unwrap_or_else(|| Value::Object(Map::new()));
-
-        let config_file = server_settings
-            .get("configuration-file")
-            .map(|v| v.as_str())
-            .flatten();
-
-        match (init_settings.get("displayArguments"), config_file) {
-            (None, None) => Some("build.hxml"),
-            (_, Some(file)) => Some(file),
-            (Some(_), None) => None,
+        if init_settings.get("displayArguments").is_none() {
+            init_settings["displayArguments"] =
+                Value::Array(vec![Value::String("build.hxml".to_owned())]);
         }
-        .inspect(|f| {
-            init_settings["displayArguments"] = Value::Array(vec![Value::String((*f).to_owned())]);
-        });
 
         Ok(Some(init_settings))
     }

@@ -14,8 +14,8 @@ To make the LSP use a specific `.hxml` configuration, create a `.zed/settings.js
 {
   "lsp": {
     "haxe-language-server": {
-      "settings": {
-        "configuration-file": "DevEnv.hxml"
+      "initialization_options": {
+        "displayArguments": ["DevEnv.hxml"]
       }
     }
   }
