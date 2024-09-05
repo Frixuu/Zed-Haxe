@@ -1,16 +1,6 @@
-use zed_extension_api as zed;
+use zed_extension_api::{self as zed};
 
-struct HaxeExtension {
-    // ... state
-}
+mod extension;
+mod language_server;
 
-impl zed::Extension for HaxeExtension {
-    fn new() -> Self
-    where
-        Self: Sized,
-    {
-        HaxeExtension {}
-    }
-}
-
-zed::register_extension!(HaxeExtension);
+zed::register_extension!(crate::extension::HaxeExtension);
