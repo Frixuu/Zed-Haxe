@@ -56,8 +56,7 @@ impl zed::Extension for HaxeExtension {
         let lsp_settings = LspSettings::for_worktree("haxe-language-server", worktree).ok();
 
         let mut init_settings = lsp_settings
-            .as_ref()
-            .map(|s| s.initialization_options.clone())
+            .map(|s| s.initialization_options)
             .flatten()
             .unwrap_or_else(|| Value::Object(Map::new()));
 
@@ -67,6 +66,20 @@ impl zed::Extension for HaxeExtension {
         }
 
         Ok(Some(init_settings))
+    }
+
+    fn language_server_workspace_configuration(
+        &mut self,
+        _id: &LanguageServerId,
+        worktree: &Worktree,
+    ) -> Result<Option<zed::serde_json::Value>> {
+        let lsp_settings = LspSettings::for_worktree("haxe-language-server", worktree).ok();
+        let settings = lsp_settings
+            .map(|s| s.settings)
+            .flatten()
+            .unwrap_or_else(|| Value::Object(Map::new()));
+
+        Ok(Some(settings))
     }
 }
 
