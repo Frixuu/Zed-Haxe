@@ -6,7 +6,7 @@ use zed_extension_api::{self as zed, LanguageServerId, LanguageServerInstallatio
 pub const MARKETPLACE_API_URL: &str = "https://marketplace.visualstudio.com/_apis/public";
 pub const VSHAXE_AUTHOR: &str = "nadako";
 pub const VSHAXE_NAME: &str = "vshaxe";
-pub const VSHAXE_VERSION: &str = "2.32.1";
+pub const VSHAXE_VERSION: &str = "2.32.2";
 
 fn download_url(version: &str) -> String {
     format!(
