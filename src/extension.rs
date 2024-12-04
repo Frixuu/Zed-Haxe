@@ -1,4 +1,7 @@
-use std::{env, path::PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 use zed::{Command, LanguageServerId, Worktree};
 use zed_extension_api::{
@@ -12,6 +15,14 @@ use crate::language_server::{self};
 
 pub struct HaxeExtension {
     language_server_dir: Option<PathBuf>,
+    working_dir: Box<Path>,
+}
+
+impl HaxeExtension {
+    /// Returns the path to the extension's working directory.
+    pub fn working_dir(&self) -> &Path {
+        self.working_dir.as_ref()
+    }
 }
 
 impl zed::Extension for HaxeExtension {
@@ -20,8 +31,10 @@ impl zed::Extension for HaxeExtension {
     where
         Self: Sized,
     {
+        let working_dir = PathBuf::from(env::var("PWD").unwrap()).into_boxed_path();
         HaxeExtension {
             language_server_dir: None,
+            working_dir,
         }
     }
 
@@ -30,7 +43,7 @@ impl zed::Extension for HaxeExtension {
         id: &LanguageServerId,
         _wt: &Worktree,
     ) -> Result<Command> {
-        self.language_server_dir = Some(language_server::download_if_missing(Some(id))?);
+        self.language_server_dir = Some(language_server::download_if_missing(self, Some(id))?);
 
         let server_bin_path = self
             .language_server_dir
@@ -81,8 +94,4 @@ impl zed::Extension for HaxeExtension {
 
         Ok(Some(settings))
     }
-}
-
-pub fn working_dir() -> PathBuf {
-    PathBuf::from(env::var("PWD").unwrap())
 }
