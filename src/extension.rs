@@ -1,5 +1,7 @@
 use std::{
     env,
+    fs::OpenOptions,
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -39,6 +41,17 @@ impl zed::Extension for HaxeExtension {
         Self: Sized,
     {
         let working_dir = PathBuf::from(env::var("PWD").unwrap()).into_boxed_path();
+
+        let default_hxml_path = working_dir.join("default-config.hxml");
+        if let Ok(mut file) = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(default_hxml_path)
+        {
+            file.write_all("--class-path .\n--no-output\n".as_bytes())
+                .ok();
+        };
+
         HaxeExtension {
             language_server_dir: None,
             working_dir,
@@ -82,8 +95,10 @@ impl zed::Extension for HaxeExtension {
             .unwrap_or_else(|| Value::Object(Map::new()));
 
         if init_settings.get("displayArguments").is_none() {
-            init_settings["displayArguments"] =
-                Value::Array(vec![Value::String("build.hxml".to_owned())]);
+            let default_hxml_path = self.working_dir().join("default-config.hxml");
+            init_settings["displayArguments"] = Value::Array(vec![Value::String(
+                default_hxml_path.to_string_lossy().to_string(),
+            )]);
         }
 
         Ok(Some(init_settings))
