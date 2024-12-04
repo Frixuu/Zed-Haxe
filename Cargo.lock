@@ -105,6 +105,8 @@ name = "haxe-extension"
 version = "0.1.2"
 dependencies = [
  "flate2",
+ "serde",
+ "serde_json",
  "zed_extension_api",
  "zip",
 ]

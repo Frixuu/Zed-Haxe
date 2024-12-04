@@ -11,17 +11,24 @@ use zed_extension_api::{
     Result,
 };
 
-use crate::language_server::{self};
+use crate::{
+    language_server::{self},
+    vs,
+};
 
 pub struct HaxeExtension {
     language_server_dir: Option<PathBuf>,
     working_dir: Box<Path>,
+    vs_api_client: vs::PublicGalleryClient,
 }
 
 impl HaxeExtension {
     /// Returns the path to the extension's working directory.
     pub fn working_dir(&self) -> &Path {
         self.working_dir.as_ref()
+    }
+    pub fn vs_api_client(&self) -> &vs::PublicGalleryClient {
+        &self.vs_api_client
     }
 }
 
@@ -35,6 +42,7 @@ impl zed::Extension for HaxeExtension {
         HaxeExtension {
             language_server_dir: None,
             working_dir,
+            vs_api_client: vs::PublicGalleryClient::new(),
         }
     }
 
