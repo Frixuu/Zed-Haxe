@@ -1,8 +1,27 @@
 # Haxe language support for Zed
 
-## Usage
+## Installation
 
-Install the extension.
+To use dev Zed extensions, you will need to have [Rust compiler installed](https://rustup.rs/).
+
+You will also need to `git clone` this repository.
+
+> [!TIP]  
+> If you're reading this with a web browser,
+> you might also click the green `< > Code` button at the top of the page
+> and choose `Download ZIP.`
+
+In the `Extensions` panel (`Ctrl+Shift+X`), click `Install Dev Extension` in the top right corner.
+Choose the location of the downloaded directory.
+
+> [!IMPORTANT]  
+> This process might take a few minutes.  
+> If this is your first time installing dev extensions,
+> Zed may need to download its WASM toolchain (roughly 500MiB).  
+> If you're not sure if the installation process is still ongoing,
+> consult the editor logs at `Ctrl+Shift+P` > `zed: open log`.
+
+## Usage
 
 The syntax highlighting should appear immediately.
 
