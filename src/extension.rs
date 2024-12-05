@@ -13,24 +13,16 @@ use zed_extension_api::{
     Result,
 };
 
-use crate::{
-    language_server::{self},
-    vs,
-};
+use crate::language_server::{self};
 
 pub struct HaxeExtension {
-    language_server_dir: Option<PathBuf>,
     working_dir: Box<Path>,
-    vs_api_client: vs::PublicGalleryClient,
 }
 
 impl HaxeExtension {
     /// Returns the path to the extension's working directory.
     pub fn working_dir(&self) -> &Path {
         self.working_dir.as_ref()
-    }
-    pub fn vs_api_client(&self) -> &vs::PublicGalleryClient {
-        &self.vs_api_client
     }
 }
 
@@ -52,11 +44,7 @@ impl zed::Extension for HaxeExtension {
                 .ok();
         };
 
-        HaxeExtension {
-            language_server_dir: None,
-            working_dir,
-            vs_api_client: vs::PublicGalleryClient::new(),
-        }
+        HaxeExtension { working_dir }
     }
 
     fn language_server_command(
@@ -64,20 +52,14 @@ impl zed::Extension for HaxeExtension {
         id: &LanguageServerId,
         _wt: &Worktree,
     ) -> Result<Command> {
-        self.language_server_dir = Some(language_server::download_if_missing(self, Some(id))?);
-
-        let server_bin_path = self
-            .language_server_dir
-            .as_ref()
-            .unwrap()
-            .join("bin")
-            .join("server.js")
-            .to_string_lossy()
-            .to_string();
-
+        let version = language_server::download_from_gh_if_missing(self, Some(id))?;
         Ok(zed::Command {
             command: zed::node_binary_path()?,
-            args: vec![server_bin_path],
+            args: vec![
+                language_server::path_of_server_binary(self, version.as_str())
+                    .to_string_lossy()
+                    .to_string(),
+            ],
             env: vec![],
         })
     }
