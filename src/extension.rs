@@ -5,12 +5,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use zed::{Command, LanguageServerId, Worktree};
 use zed_extension_api::{
     self as zed,
     serde_json::{Map, Value},
     settings::LspSettings,
-    Result,
+    Command, LanguageServerId,
+    Os::*,
+    Result, Worktree,
 };
 
 use crate::language_server::{self};
@@ -32,7 +33,8 @@ impl zed::Extension for HaxeExtension {
     where
         Self: Sized,
     {
-        let working_dir = PathBuf::from(env::var("PWD").unwrap()).into_boxed_path();
+        let pwd = env::current_dir().unwrap().to_string_lossy().to_string();
+        let working_dir = PathBuf::from(pwd).into_boxed_path();
 
         let default_hxml_path = working_dir.join("default-config.hxml");
         if let Ok(mut file) = OpenOptions::new()
@@ -55,11 +57,12 @@ impl zed::Extension for HaxeExtension {
         let version = language_server::download_from_gh_if_missing(self, Some(id))?;
         Ok(zed::Command {
             command: zed::node_binary_path()?,
-            args: vec![
-                language_server::path_of_server_binary(self, version.as_str())
+            args: vec![{
+                let path = language_server::path_of_server_binary(self, version.as_str())
                     .to_string_lossy()
-                    .to_string(),
-            ],
+                    .to_string();
+                trim_leading_slash_on_windows(path)
+            }],
             env: vec![],
         })
     }
@@ -78,9 +81,10 @@ impl zed::Extension for HaxeExtension {
 
         if init_settings.get("displayArguments").is_none() {
             let default_hxml_path = self.working_dir().join("default-config.hxml");
-            init_settings["displayArguments"] = Value::Array(vec![Value::String(
-                default_hxml_path.to_string_lossy().to_string(),
-            )]);
+            init_settings["displayArguments"] = Value::Array(vec![Value::String({
+                let path = default_hxml_path.to_string_lossy().to_string();
+                trim_leading_slash_on_windows(path)
+            })]);
         }
 
         Ok(Some(init_settings))
@@ -99,4 +103,12 @@ impl zed::Extension for HaxeExtension {
 
         Ok(Some(settings))
     }
+}
+
+// See https://github.com/zed-industries/zed/issues/20559
+fn trim_leading_slash_on_windows(mut s: String) -> String {
+    if zed::current_platform().0 == Windows && s.starts_with(r"/") {
+        s.remove(0);
+    }
+    s
 }

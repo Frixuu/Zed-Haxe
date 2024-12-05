@@ -1,11 +1,17 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs::{self},
+    path::PathBuf,
+};
 
 use crate::extension::HaxeExtension;
-use zed::DownloadedFileType::Uncompressed;
 use zed_extension_api::{
-    self as zed, GithubReleaseOptions, LanguageServerId,
+    self as zed,
+    http_client::{HttpMethod::*, RedirectPolicy::*},
+    GithubReleaseOptions, LanguageServerId,
     LanguageServerInstallationStatus::{self, *},
 };
+
+const USER_AGENT: &'static str = "Zed extension for Haxe v0.2";
 
 /// If an ID of a language server is provided, sets this server's installation status.
 fn set_maybe_status(id: Option<&LanguageServerId>, status: &LanguageServerInstallationStatus) {
@@ -68,22 +74,29 @@ fn download_from_gh(
     url: &str,
     version: &str,
 ) -> Result<(), String> {
-    fs::create_dir_all(path_of_server_dir(extension, version))
-        .map_err(|e| format!("Could not create language server directory: {e:?}"))?;
+    let server_dir = path_of_server_dir(extension, version);
+    fs::create_dir_all(&server_dir)
+        .map_err(|e| format!(
+            "Tried to ensure a directory for the language server exists before downloading it, but could not create it: {e:?}"
+        ))?;
 
     set_maybe_status(id, &Downloading);
-    match zed::download_file(
-        url,
-        path_of_server_binary(extension, version).to_str().unwrap(),
-        Uncompressed,
-    ) {
-        Ok(_) => {
-            set_maybe_status(id, &None);
-            Ok(())
-        }
-        Err(e) => {
-            set_maybe_status(id, &Failed(e.clone()));
-            Err(format!("Could not download language server: {e:?}"))
-        }
-    }
+
+    let request = zed::http_client::HttpRequest::builder()
+        .method(Get)
+        .url(url)
+        .header("user-agent", USER_AGENT)
+        .redirect_policy(FollowLimit(5))
+        .build()
+        .unwrap();
+
+    let response = zed::http_client::fetch(&request).map_err(|e| {
+        format!("Tried to fetch the language server binary, but something happened: {e:?}")
+    })?;
+
+    fs::write(path_of_server_binary(extension, version), &response.body)
+        .map_err(|e| format!("Could not save the language server binary to disk: {e:?}"))?;
+
+    set_maybe_status(id, &None);
+    Ok(())
 }
