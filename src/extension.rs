@@ -2,9 +2,10 @@ use std::{env, fs::OpenOptions, io::Write, ops::IndexMut, path::Path};
 
 use zed_extension_api::{
     self as zed,
+    lsp::{Completion, CompletionKind, Symbol, SymbolKind},
     serde_json::{json, Map, Value},
     settings::LspSettings,
-    Command, LanguageServerId,
+    CodeLabel, CodeLabelSpan, Command, LanguageServerId,
     Os::*,
     Result, Worktree,
 };
@@ -122,6 +123,67 @@ impl zed::Extension for HaxeExtension {
             .unwrap_or_else(|| Value::Object(Map::new()));
 
         Ok(Some(settings))
+    }
+
+    fn label_for_completion(
+        &self,
+        _: &LanguageServerId,
+        completion: Completion,
+    ) -> Option<CodeLabel> {
+        let name = completion.label.trim();
+        let (prefix, suffix) = match completion.kind? {
+            CompletionKind::Function => ("function NOT_REAL_", "(){}"),
+            CompletionKind::Method => ("class NOT_REAL { public function NOT_REAL_", "(){} }"),
+            CompletionKind::Class => ("class NOT_REAL_", "{}"),
+            CompletionKind::Interface => ("interface NOT_REAL_", "{}"),
+            CompletionKind::Variable => ("var NOT_REAL_", ":Any;"),
+            CompletionKind::Constant => ("public static inline final NOT_REAL_", ":Any = null;"),
+            CompletionKind::Field => ("class NOT_REAL { var NOT_REAL_", ":Any; }"),
+            CompletionKind::Property => ("class NOT_REAL { var NOT_REAL_", "(get, set):Any; }"),
+            CompletionKind::Enum => ("enum NOT_REAL_", "{}"),
+            CompletionKind::EnumMember => ("enum NOT_REAL { NOT_REAL_", "; }"),
+            CompletionKind::Constructor => ("enum NOT_REAL { NOT_REAL_", "(foo:Any); }"),
+            CompletionKind::TypeParameter => ("class NOT_REAL<", ">{}"),
+            CompletionKind::Keyword => ("", ""),
+            _ => return None,
+        };
+
+        let faux_code = format!("{prefix}{name}{suffix}");
+        Some(CodeLabel {
+            spans: vec![CodeLabelSpan::code_range(
+                prefix.len()..(prefix.len() + name.len()),
+            )],
+            filter_range: (0..name.len()).into(),
+            code: faux_code,
+        })
+    }
+
+    fn label_for_symbol(&self, _: &LanguageServerId, symbol: Symbol) -> Option<CodeLabel> {
+        let name = symbol.name.trim();
+        let (prefix, suffix) = match symbol.kind {
+            SymbolKind::Function => ("function NOT_REAL_", "(){}"),
+            SymbolKind::Method => ("class NOT_REAL { public function NOT_REAL_", "(){} }"),
+            SymbolKind::Class => ("class NOT_REAL_", "{}"),
+            SymbolKind::Interface => ("interface NOT_REAL_", "{}"),
+            SymbolKind::Variable => ("var NOT_REAL_", ":Any;"),
+            SymbolKind::Constant => ("public static inline final NOT_REAL_", ":Any = null;"),
+            SymbolKind::Field => ("class NOT_REAL { var NOT_REAL_", ":Any; }"),
+            SymbolKind::Property => ("class NOT_REAL { var NOT_REAL_", "(get, set):Any; }"),
+            SymbolKind::Enum => ("enum NOT_REAL_", "{}"),
+            SymbolKind::EnumMember => ("enum NOT_REAL { NOT_REAL_", "; }"),
+            SymbolKind::Constructor => ("enum NOT_REAL { NOT_REAL_", "(foo:Any); }"),
+            SymbolKind::TypeParameter => ("class NOT_REAL<", ">{}"),
+            _ => return None,
+        };
+
+        let faux_code = format!("{prefix}{name}{suffix}");
+        Some(CodeLabel {
+            spans: vec![CodeLabelSpan::code_range(
+                prefix.len()..(prefix.len() + name.len()),
+            )],
+            filter_range: (0..name.len()).into(),
+            code: faux_code,
+        })
     }
 }
 
