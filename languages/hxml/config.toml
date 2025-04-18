@@ -1,0 +1,4 @@
+name = "HXML"
+grammar = "hxml"
+path_suffixes = ["hxml"]
+line_comments = ["#"]

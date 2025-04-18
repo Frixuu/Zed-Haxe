@@ -1,7 +1,7 @@
 name = "Haxe"
 grammar = "haxe"
 path_suffixes = ["hx"]
-line_comments = ["// "]
+line_comments = ["//"]
 block_comment = ["/*", "*/"]
 autoclose_before = ";:.,=)}]>"
 collapsed_placeholder = " /* ... */ "
