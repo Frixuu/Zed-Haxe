@@ -12,7 +12,7 @@ commit = "12e814cd9b0656b0eaa3e04b0036b3b6625cc0d7"
 
 [grammars.hxml]
 repository = "https://github.com/Frixuu/tree-sitter-hxml"
-commit = "8149f5ae06e2798ef69d663827d6a4f6f1866e52"
+commit = "09d6948e06e877448b3e0a76a8f9a8064229bcaa"
 
 [language_servers.haxe-language-server]
 name = "Haxe Language Server"
