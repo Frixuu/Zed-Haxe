@@ -11,7 +11,7 @@ use zed_extension_api::{
     LanguageServerInstallationStatus::{self, *},
 };
 
-const USER_AGENT: &'static str = "Zed extension for Haxe v0.2";
+const USER_AGENT: &'static str = "Zed extension for Haxe v0.3";
 
 /// If an ID of a language server is provided, sets this server's installation status.
 fn set_maybe_status(id: Option<&LanguageServerId>, status: &LanguageServerInstallationStatus) {
