@@ -1,6 +1,6 @@
 id = "haxe"
 name = "Haxe"
-version = "0.3.0"
+version = "0.3.1"
 schema_version = 1
 authors = ["Frixuu <kontakt@lukasz.xyz>"]
 description = "Language server and syntax highlighting support for the Haxe programming language."
@@ -10,6 +10,10 @@ repository = "https://github.com/Frixuu/Zed-Haxe"
 repository = "https://github.com/vantreeseba/tree-sitter-haxe"
 commit = "12e814cd9b0656b0eaa3e04b0036b3b6625cc0d7"
 
+[grammars.hxml]
+repository = "https://github.com/Frixuu/tree-sitter-hxml"
+commit = "8dd53798fe5a152bc9726333bc34c166a7a8419a"
+
 [language_servers.haxe-language-server]
 name = "Haxe Language Server"
-language = "Haxe"
+languages = ["Haxe", "HXML"]
