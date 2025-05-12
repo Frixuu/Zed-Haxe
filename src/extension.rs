@@ -118,14 +118,34 @@ impl zed::Extension for HaxeExtension {
         let display_args = init_options.index_mut("displayArguments");
         match display_args {
             Value::Null => {
-                // The language server requires *some* .hxml config file to be present.
+                // Ideally, the language server has *some* .hxml config file present.
+                // The problem is, Zed does not provide a way to list files in the worktree.
+                // This makes it impossible to find the correct .hxml file to use as config.
 
-                // This would be the best moment to discover .hxml files in the project root!
-                // However, Zed runs its extensions in the sandbox,
-                // preventing them from listing files in the worktree.
-                // Maybe in the future?
+                // However, we can check for existence of files we know exact names of,
+                // which can tell us that the current setup is completely wrong:
 
-                // For now, use our (almost) blank, default config
+                if worktree.read_text_file("Project.xml").is_ok() {
+                    return Err(concat!(
+                        "Lime/OpenFL projects are not fully supported at this time!\n\n",
+                        "You should generate a .hxml file using `lime display html5 > html5.hxml`\n",
+                        "and consult the documentation for how to pass it to the language server:\n",
+                        "<https://github.com/Frixuu/Zed-Haxe#usage>"
+                    )
+                    .into());
+                }
+
+                if worktree.read_text_file("ceramic.yml").is_ok() {
+                    return Err(concat!(
+                        "Ceramic projects are not fully supported at this time!\n\n",
+                        "You should generate a .hxml file using `ceramic clay hxml web > web.hxml`\n",
+                        "and consult the documentation for how to pass it to the language server:\n",
+                        "<https://github.com/Frixuu/Zed-Haxe#usage>"
+                    )
+                    .into());
+                }
+
+                // As a fallback, use our (almost) blank, default config
                 // we created while our extension was loading:
                 *display_args = json!([trim_leading_slash_on_windows(
                     self.working_dir()
