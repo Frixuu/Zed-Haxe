@@ -14,6 +14,7 @@ use crate::language_server::{self};
 
 pub struct HaxeExtension {
     language_server_binary_path: Option<String>,
+    language_server_version: Option<String>,
     working_dir: Box<Path>,
 }
 
@@ -43,8 +44,12 @@ impl zed::Extension for HaxeExtension {
                 .ok();
         };
 
+        let last_version_path = working_dir.join("version.txt");
+        let language_server_version = std::fs::read_to_string(last_version_path).ok();
+
         HaxeExtension {
             language_server_binary_path: None,
+            language_server_version,
             working_dir,
         }
     }
@@ -57,7 +62,31 @@ impl zed::Extension for HaxeExtension {
         let language_server_binary_path = match &self.language_server_binary_path {
             Some(path) => path.clone(),
             None => {
-                let version = language_server::download_from_gh_if_missing(self, Some(id))?;
+                // Try to fetch the latest version of the language server and download it
+                let version = match language_server::download_from_gh_if_missing(self, Some(id)) {
+                    Ok(version) => {
+                        let last_version_path = self.working_dir.join("version.txt");
+                        std::fs::write(last_version_path, &version).ok();
+                        self.language_server_version = Some(version.clone());
+                        version
+                    }
+                    Err(_) => match &self.language_server_version {
+                        // If downloading fails, try to use the last known version (if one was set)
+                        Some(version) => {
+                            if language_server::is_version_installed(&self, version.as_str()) {
+                                version.clone()
+                            } else {
+                                return Err(format!(
+                                    "Language server version \"{version}\" was set as fallback, but it does not exist on disk"
+                                ));
+                            }
+                        }
+                        // Or fail, if no version was set (extension was never run)
+                        None => return Err(
+                            "Failed to download the language server. Also, no known version installed previously"
+                                .into()),
+                    },
+                };
                 let path = language_server::path_of_server_binary(self, version.as_str())
                     .to_string_lossy()
                     .to_string();
