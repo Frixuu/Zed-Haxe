@@ -7,8 +7,8 @@ description = "Language server and syntax highlighting support for the Haxe prog
 repository = "https://github.com/Frixuu/Zed-Haxe"
 
 [grammars.haxe]
-repository = "https://github.com/Frixuu/tree-sitter-haxe"
-commit = "2737bbad32f4e25df7fceb5ac21010880e2077aa"
+repository = "https://github.com/tong/tree-sitter-haxe"
+commit = "a7327c60e73670b5c75e9a6231cc9cbdefd9c91f"
 
 [grammars.hxml]
 repository = "https://github.com/Frixuu/tree-sitter-hxml"

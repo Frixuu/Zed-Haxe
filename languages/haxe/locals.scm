@@ -1,13 +1,12 @@
-; Originally from https://github.com/vantreeseba/tree-sitter-haxe/blob/main/queries/locals.scm
-
+; Originally from https://github.com/tong/tree-sitter-haxe/blob/main/queries/locals.scm
 [
- (block)
- (function_declaration)
+  (EBlock)
+  (EFunction)
 ] @scope @local.scope
 
-; Definitions
-(function_arg name: (identifier) @definition.parameter)
-(variable_declaration name: (identifier) @local.definition)
+(FunctionArg
+  name: (identifier) @definition.parameter)
 
-; References
-(block (identifier)) @local.reference
+; (EVars name: (identifier) @local.definition)
+; (EBlock (identifier)) @local.reference
+(identifier) @local.reference

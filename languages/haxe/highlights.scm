@@ -1,147 +1,209 @@
-; Originally from https://github.com/vantreeseba/tree-sitter-haxe/blob/main/queries/highlights.scm
+; Originally from https://github.com/tong/tree-sitter-haxe/blob/main/queries/highlights.scm
+
+(comment) @comment
+(line_comment) @comment.line
+(block_comment) @comment.block
 
 (identifier) @variable
-(comment) @comment
-
-; Preprocessor Statement
-; --------
-(preprocessor_statement) @tag
-; (metadata name: (identifier) @type) @tag
-
-; MetaData
-; --------
-(metadata) @tag
-(metadata name: (identifier) @type) @tag
-
-; Generic/Type Params
-; --------------
-(type_params
-  "<" @punctuation.bracket
-  ">" @punctuation.bracket
-)
-
-; Declarations
-; ------------
-
-(class_declaration name: (identifier) @type.definition)
-(interface_declaration name: (identifier) @type.definition)
-(typedef_declaration name: (identifier) @type.definition)
-
-(function_declaration name: (identifier) @function)
-(function_arg name: (identifier) @variable.parameter)
-
-; Expressions
-; -----------
-; (call_expression name: (identifier) @variable.parameter)
-
-; TODO: Figure out how to determined when "nested member call" is last ident.
-; apparently this is a known issue https://github.com/tree-sitter/tree-sitter/issues/880
-(call_expression object: [
-  (_) @function
-  (_ (identifier) @function .)
-;   (_(_ (identifier) @function .))
-;   (_(_(_ (identifier) @function .)))
-;   (_(_(_(_ (identifier) @function .))))
-;   (_(_(_(_(_ (identifier) @function .)))))
-])
-
-; Literals
-; --------
-; [(keyword) (null)] @keyword
-; (type) @type
 (type_name) @type
-(package_name) @module
-(type (identifier) !built_in) @type
-(type built_in: (identifier)) @type.builtin
-[(integer) (float)] @number
-(string) @string
-(bool) @boolean
-(operator) @operator
-(escape_sequence) @punctuation
-(null) @constant.builtin
-(access_identifiers "null" @keyword)
 
-; Keywords
-; --------
+(wildcard_pattern) @constant.builtin
+
+["{" "}" "[" "]" "(" ")"] @punctuation.bracket
+["<" ">"] @punctuation.bracket
+["," ";" ":" "..."] @punctuation.delimiter
+["?" "??"] @punctuation.special
+["->" "=>"] @keyword.operator
+
 [
-  "abstract"
-  "as"
   "break"
   "case"
   "cast"
-  ;"catch"
-  "class"
+  "catch"
   "continue"
   "default"
-  ;"do"
-  "dynamic"
+  "do"
   "else"
-  ;"enum"
+  "enum"
   "extends"
   "extern"
-  "final"
-  ;"for"
-  "function"
+  "for"
   "if"
   "implements"
-  "import"
   "in"
-  "inline"
-  "interface"
-  "macro"
-  ;"operator"
-  "overload"
-  "override"
+  "new"
   "package"
-  "private"
-  "public"
-  "return"
-  "static"
   "switch"
-  "this"
   "throw"
-  ;"try"
-  "typedef"
+  "try"
   "untyped"
-  "using"
   "var"
-  ;"while"
+  "while"
 ] @keyword
 
-;(function_declaration name: "new" @constructor)
-;(call_expression
-;    "new" @keyword
-;    constructor: (type_name) @constructor
-;)
+[
+  "abstract"
+  "class"
+  "enum"
+  "interface"
+  "typedef"
+] @keyword.declaration
 
-
-; Tokens
-; ------
-
-(":") @punctuation.special
-(pair [":" "=>"] @punctuation.special)
+["return"] @keyword.return
+["function"] @keyword.function
+["as"] @keyword.operator
 
 [
-  "("
-  ")"
-  "["
-  "]"
-  "{"
-  "}"
-]  @punctuation.bracket
-;
+  "public"
+  "private"
+  "final"
+  "inline"
+  "override"
+  "static"
+  "dynamic"
+  "macro"
+] @keyword.modifier
+
+; "macro" @macro
+
+(Int) @number
+(Float) @number.float
+(String (escape_sequence) @string.escape)
+(String (fragment) @string)
+(String (interpolation) @string.special)
+(Regexp) @string.regex
+
+(true) @boolean
+(false) @boolean
+
+(null) @constant.builtin
+(super) @variable.builtin
+(this) @variable.builtin
+
+(package_name) @namespace
+
 [
-;   ";"
-;   "?."
-;   "."
-  ","
-] @punctuation.delimiter
+ (import)
+ (using)
+] @keyword.import
+
+(import
+  path: (package_name) @namespace
+  module: (type_name) @module)
+(import alias: (identifier) @type)
+(import sub: (identifier) @property)
+(import (wildcard) @constant)
+
+(using
+  path: (package_name) @namespace
+  type: (type_name) @type)
+
+;---------------------------------------------------
 
 
-; Interpolation
-; -------------
-(interpolation "$" @punctuation.special)
-(interpolation
-  "${" @punctuation.special
-  "}" @punctuation.special
-) @embedded
+(ComplexType "->" @keyword.operator)
+
+(TypePath
+  pack: (package_name) @namespace
+  name: (type_name) @type
+  sub: (identifier) @property)
+
+(TypeParameter
+  name: (type_name) @type.parameter)
+(TypeParameter
+  name: (type_name) @type.parameter
+  [":"] @punctuation.delimiter
+  constraint: (ComplexType
+    (TypePath
+      name: (type_name) @type)))
+
+(FunctionArg name: (identifier) @variable.parameter)
+(FunctionArg "=" @punctuation.special)
+
+
+(ComplexType "&" @operator)
+
+; Declarations ----------------------------------------------------------------
+
+[
+  (AbstractType)
+  (ClassType)
+  (EnumType)
+  (DefType)
+] @type.definition
+
+(ClassVar type: (ComplexType) @type)
+(ClassVar
+  (property_accessor
+    get: (property_access) @property
+    set: (property_access) @property))
+
+(ClassMethod
+  "function" @keyword.function
+  name: (identifier) @function.method)
+(ClassMethod "macro" name: (identifier) @function.macro)
+
+(EnumConstructor name: (identifier) @constant)
+
+(TAnonymous) @type.builtin
+(AnonymousField name: (identifier) @variable.member)
+
+; Expressions -----------------------------------------------------------------
+
+(EBinop op: _ @operator)
+(EUnop op: _ @operator)
+(ETernary "?" @operator)
+(ETernary ":" @operator)
+
+(EField name: (identifier) @property)
+(EField "." @punctuation.delimiter)
+(ECast type: (ComplexType) @type)
+(ECall callee: (identifier) @function.call)
+(ECall callee: (EField name: (identifier) @function.call))
+(EFor
+  key: (identifier) @variable
+  value: (identifier) @variable
+  var: (identifier) @variable
+)
+(EFunction name: (identifier) @function)
+(ENew (TypePath) @type)
+(EObjectDecl name: (identifier) @property)
+(EObjectDecl name: (String) @property)
+; (ETry (identifier) @variable)
+(ESwitch "switch" @keyword.control)
+(switch_case "case" @keyword.control)
+(switch_default "default" @keyword.control)
+(EThrow expr: (_) @keyword.exception)
+(EUntyped "untyped" @keyword.debug)
+(EVars
+  "final" @keyword
+  name: (identifier) @variable)
+
+; macro reification -----------------------------------------------------------
+
+"macro" @macro
+(macro (reification)) @macro
+
+; Metadata --------------------------------------------------------------------
+
+(MetaDataEntry
+  [
+    "@" @attribute
+    ":" @attribute
+    name: (identifier) @attribute
+    params: (_) @attribute.parameter
+    "(" @punctuation.bracket
+    ")" @punctuation.bracket
+    (ECall callee: (EField name: (identifier) @function.call))
+  ])
+
+(type_trace
+  "$type" @keyword.debug)
+
+[
+  (conditional)
+  (conditional_elseif)
+  (conditional_else)
+  (conditional_end)
+  (conditional_error)
+] @keyword.directive

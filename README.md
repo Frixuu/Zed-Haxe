@@ -73,6 +73,5 @@ Choose the location of the downloaded directory.
 
 ## Credits
 
-- [tree-sitter grammar by vantreeseba](https://github.com/vantreeseba/tree-sitter-haxe),
-MIT-licensed
+- [tree-sitter grammar by tong](https://github.com/tong/tree-sitter-haxe)
 - [haxe-language-server by the vshaxe team](https://github.com/vshaxe/haxe-language-server), MIT-licensed
