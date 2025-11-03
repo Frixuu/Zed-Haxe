@@ -26,7 +26,6 @@
   "else"
   "enum"
   "extends"
-  "extern"
   "for"
   "if"
   "implements"
@@ -62,9 +61,9 @@
   "static"
   "dynamic"
   "macro"
+  "extern"
 ] @keyword.modifier
-
-; "macro" @macro
+(ClassType "abstract" @keyword.modifier)
 
 (Int) @number
 (Float) @number.float
@@ -146,7 +145,7 @@
 (EnumConstructor name: (identifier) @constant)
 
 (TAnonymous) @type.builtin
-(AnonymousField name: (identifier) @variable.member)
+(Field name: (identifier) @variable.member)
 
 ; Expressions -----------------------------------------------------------------
 
@@ -183,6 +182,7 @@
 
 "macro" @macro
 (macro (reification)) @macro
+(ClassMethod "macro" @keyword.modifier)
 
 ; Metadata --------------------------------------------------------------------
 
