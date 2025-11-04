@@ -10,7 +10,10 @@ use zed_extension_api::{
     Result, Worktree,
 };
 
-use crate::language_server::{self};
+use crate::{
+    helper_scripts,
+    language_server::{self},
+};
 
 pub struct HaxeExtension {
     language_server_binary_path: Option<String>,
@@ -65,7 +68,7 @@ impl zed::Extension for HaxeExtension {
                 // Try to fetch the latest version of the language server and download it
                 let version = match language_server::download_from_gh_if_missing(self, Some(id)) {
                     Ok(version) => {
-                        let last_version_path = self.working_dir.join("version.txt");
+                        let last_version_path = (&self.working_dir).join("version.txt");
                         std::fs::write(last_version_path, &version).ok();
                         self.language_server_version = Some(version.clone());
                         version
@@ -120,39 +123,83 @@ impl zed::Extension for HaxeExtension {
             Value::Null => {
                 // Ideally, the language server has *some* .hxml config file present.
                 // The problem is, Zed does not provide a way to list files in the worktree.
-                // This makes it impossible to find the correct .hxml file to use as config.
+                // We need to delegate to a Node script:
+                let mut command = zed::Command {
+                    command: zed::node_binary_path()?,
+                    args: vec![
+                        "-e".to_string(),                                    // Eval mode
+                        helper_scripts::DETECT_PROJECT_FILES.to_string(),    // Inline the script
+                        "--".to_string(),                                    // Custom args
+                        trim_leading_slash_on_windows(worktree.root_path()), // Where to look
+                    ],
+                    env: vec![],
+                };
 
-                // However, we can check for existence of files we know exact names of,
-                // which can tell us that the current setup is completely wrong:
-
-                if worktree.read_text_file("Project.xml").is_ok() {
-                    return Err(concat!(
-                        "Lime/OpenFL projects are not fully supported at this time!\n\n",
-                        "You should generate a .hxml file using `lime display html5 > html5.hxml`\n",
-                        "and consult the documentation for how to pass it to the language server:\n",
-                        "<https://github.com/Frixuu/Zed-Haxe#usage>"
+                match command.output() {
+                    Ok(output) => {
+                        let status_code = output.status.unwrap_or(0);
+                        let file_path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        match status_code {
+                            0 => {
+                                // As a fallback, use our (almost) blank, default config
+                                // we created while our extension was loading:
+                                *display_args = json!([trim_leading_slash_on_windows(
+                                    self.working_dir()
+                                        .join("default-config.hxml")
+                                        .to_string_lossy()
+                                        .to_string()
+                                )]);
+                            }
+                            101 => {
+                                // HXML file found
+                                *display_args = json!([file_path]);
+                            }
+                            102 => {
+                                // Lime's XML file found
+                                return Err(concat!(
+"Lime/OpenFL projects are not fully supported at this time!\n\n",
+"You should generate a .hxml file using `lime display html5 > html5.hxml`\n",
+"and consult the documentation for how to pass it to the language server:\n",
+"<https://github.com/Frixuu/Zed-Haxe#usage>"
                     )
-                    .into());
-                }
-
-                if worktree.read_text_file("ceramic.yml").is_ok() {
-                    return Err(concat!(
-                        "Ceramic projects are not fully supported at this time!\n\n",
-                        "You should generate a .hxml file using `ceramic clay hxml web > web.hxml`\n",
-                        "and consult the documentation for how to pass it to the language server:\n",
-                        "<https://github.com/Frixuu/Zed-Haxe#usage>"
+                                .to_string());
+                            }
+                            103 => {
+                                // Ceramic's YML file found
+                                return Err(concat!(
+"Ceramic projects are not fully supported at this time!\n\n",
+"You should generate a .hxml file using `ceramic clay hxml web > web.hxml`\n",
+"and consult the documentation for how to pass it to the language server:\n",
+"<https://github.com/Frixuu/Zed-Haxe#usage>"
                     )
-                    .into());
+                                .to_string());
+                            }
+                            104 => {
+                                // NME's NMML file found
+                                return Err(concat!(
+"NME projects are not fully supported at this time!\n\n",
+"You should run `nme prepare`, which generates a `bin/[platform]/haxe/build.hxml` file\n",
+"and consult the documentation for how to pass it to the language server:\n",
+"<https://github.com/Frixuu/Zed-Haxe#usage>"
+                    )
+                                .to_string());
+                            }
+                            _ => {
+                                return Err(format!(
+                                    "Internal error in discover script (return code {}):\n\nstderr:\n{}\nstdout:\n{}",
+                                    status_code,
+                                    String::from_utf8_lossy(&output.stderr),
+                                    String::from_utf8_lossy(&output.stdout)
+                                ));
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        return Err(format!(
+                            "Could not run the project discover script:\n\n{e:?}"
+                        ));
+                    }
                 }
-
-                // As a fallback, use our (almost) blank, default config
-                // we created while our extension was loading:
-                *display_args = json!([trim_leading_slash_on_windows(
-                    self.working_dir()
-                        .join("default-config.hxml")
-                        .to_string_lossy()
-                        .to_string()
-                )]);
             }
             _ => {}
         }

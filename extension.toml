@@ -17,3 +17,8 @@ commit = "6199e87f50afedab695de1c835430da424ed4ca9"
 [language_servers.haxe-language-server]
 name = "Haxe Language Server"
 languages = ["Haxe", "HXML"]
+
+[[capabilities]]
+kind = "process:exec"
+command = "*"
+args = ["-e", "*", "--", "**"]
