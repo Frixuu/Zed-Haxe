@@ -1,7 +1,6 @@
 # Haxe language support for Zed
 
-> [!NOTE] 
-> This extension is now published! Open the `Extensions` panel (`Ctrl+Shift+X`) and search for "Haxe".
+![Screenshot of Zed editor](media/example-gruvbox.webp)
 
 ## Usage
 
@@ -9,7 +8,11 @@ The syntax highlighting should appear immediately.
 
 The backing language server should be downloaded automatically in the background.
 
-To make the LSP use a specific `.hxml` configuration, create a `.zed/settings.json` file in your project root:
+This extension detects all `.hxml` files in the workspace root,
+and then tries to choose the best one as configuration.
+This decision might be wrong!
+To explicitly use a specific `.hxml` file,
+create a `.zed/settings.json` file in your project root:
 
 ```json
 {
@@ -26,7 +29,7 @@ To make the LSP use a specific `.hxml` configuration, create a `.zed/settings.js
 <details>
   <summary>Additional settings you may want to pass to the language server: (non-exhaustive)</summary>
 
-  [(reference)](https://github.com/vshaxe/haxe-language-server/blob/9c3114de15bfd8096833ee50aab131459347e3f7/src/haxeLanguageServer/Configuration.hx#L134)
+  [(reference)](https://github.com/vshaxe/haxe-language-server/blob/65ba91ce13e413fe721d371cdf9e39024a53f2ec/src/haxeLanguageServer/Configuration.hx#L136)
 
   ```json
   {
@@ -48,7 +51,42 @@ To make the LSP use a specific `.hxml` configuration, create a `.zed/settings.js
     }
   }
   ```
+
 </details>
+
+## Usage (Lime/OpenFL/HaxeFlixel)
+
+The Haxe language server does not natively understand Lime projects,
+supporting `.hxml` files only.
+However, Lime lets you easily generate them.
+
+Assuming that
+
+- you have a `Project.xml` file in your workspace root, and
+- you're targetting `html5`,
+
+you can run in your favorite shell:
+
+```sh
+lime build html5
+lime display html5 > html5.hxml
+```
+
+This creates a `html5.hxml` file telling Haxe which libraries to include
+and what platform to target.
+See [the instructions above](#usage) on how to tell Zed to use this file.
+
+## Usage (other)
+
+Many other Haxe toolchains can create `.hxml` files, including:
+
+```sh
+nme prepare html5
+```
+
+```sh
+ceramic clay hxml web > web.hxml
+```
 
 ## Install nightly
 
