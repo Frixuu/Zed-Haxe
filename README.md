@@ -1,5 +1,7 @@
 # Haxe language support for Zed
 
+![Screenshot of Zed editor](media/example-gruvbox.webp)
+
 ## Usage
 
 The syntax highlighting should appear immediately.
