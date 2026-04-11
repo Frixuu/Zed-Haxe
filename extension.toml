@@ -8,7 +8,7 @@ repository = "https://github.com/Frixuu/Zed-Haxe"
 
 [grammars.haxe]
 repository = "https://github.com/tong/tree-sitter-haxe"
-commit = "7bf6ca91398a7a3b5a3db4c727b17c15cb370baf"
+commit = "cd22e75fd9e80cc1752854be1a3aac22b08f82c7"
 
 [grammars.hxml]
 repository = "https://github.com/Frixuu/tree-sitter-hxml"
