@@ -1,13 +1,10 @@
 use std::{env, fs::OpenOptions, io::Write, ops::IndexMut, path::Path};
 
 use zed_extension_api::{
-    self as zed,
+    self as zed, CodeLabel, CodeLabelSpan, Command, LanguageServerId, Result, Worktree,
     lsp::{Completion, CompletionKind, Symbol, SymbolKind},
-    serde_json::{json, Map, Value},
+    serde_json::{Map, Value, json},
     settings::LspSettings,
-    CodeLabel, CodeLabelSpan, Command, LanguageServerId,
-    Os::*,
-    Result, Worktree,
 };
 
 use crate::{
@@ -93,7 +90,6 @@ impl zed::Extension for HaxeExtension {
                 let path = language_server::path_of_server_binary(self, version.as_str())
                     .to_string_lossy()
                     .to_string();
-                let path = trim_leading_slash_on_windows(path);
                 self.language_server_binary_path = Some(path.clone());
                 path
             }
@@ -127,10 +123,10 @@ impl zed::Extension for HaxeExtension {
                 let mut command = zed::Command {
                     command: zed::node_binary_path()?,
                     args: vec![
-                        "-e".to_string(),                                    // Eval mode
-                        helper_scripts::DETECT_PROJECT_FILES.to_string(),    // Inline the script
-                        "--".to_string(),                                    // Custom args
-                        trim_leading_slash_on_windows(worktree.root_path()), // Where to look
+                        "-e".to_string(),                                 // Eval mode
+                        helper_scripts::DETECT_PROJECT_FILES.to_string(), // Inline the script
+                        "--".to_string(),                                 // Custom args
+                        worktree.root_path(),                             // Where to look
                     ],
                     env: vec![],
                 };
@@ -143,12 +139,11 @@ impl zed::Extension for HaxeExtension {
                             0 => {
                                 // As a fallback, use our (almost) blank, default config
                                 // we created while our extension was loading:
-                                *display_args = json!([trim_leading_slash_on_windows(
-                                    self.working_dir()
-                                        .join("default-config.hxml")
-                                        .to_string_lossy()
-                                        .to_string()
-                                )]);
+                                *display_args = json!([self
+                                    .working_dir()
+                                    .join("default-config.hxml")
+                                    .to_string_lossy()
+                                    .to_string()]);
                             }
                             101 => {
                                 // HXML file found
@@ -281,12 +276,4 @@ impl zed::Extension for HaxeExtension {
             code: faux_code,
         })
     }
-}
-
-// See https://github.com/zed-industries/zed/issues/20559
-fn trim_leading_slash_on_windows(mut s: String) -> String {
-    if zed::current_platform().0 == Windows && s.starts_with(r"/") {
-        s.remove(0);
-    }
-    s
 }
