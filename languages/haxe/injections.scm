@@ -26,3 +26,6 @@
 (comment
   (block_comment) @injection.content
   (#set! injection.language "jsdoc"))
+
+((comment) @injection.content
+  (#set! injection.language "comment"))
