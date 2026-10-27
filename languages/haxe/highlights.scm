@@ -11,34 +11,48 @@
 
 ["{" "}" "[" "]" "(" ")"] @punctuation.bracket
 ["<" ">"] @punctuation.bracket
-["," ";" ":" "..."] @punctuation.delimiter
+["." "," ";" ":" "..."] @punctuation.delimiter
 ["?" "??"] @punctuation.special
 ["->" "=>"] @keyword.operator
 
 [
-  "break"
-  "case"
-  "cast"
-  "catch"
-  "continue"
-  "default"
-  "do"
-  "else"
-  "enum"
   "extends"
-  "for"
-  "if"
+  "from"
   "implements"
-  "in"
-  "new"
   "package"
-  "switch"
-  "throw"
-  "try"
+  "to"
   "untyped"
   "var"
-  "while"
 ] @keyword
+
+[
+  "if"
+  "else"
+  "switch"
+  "case"
+  "default"
+] @keyword.conditional
+
+[
+  "for"
+  "while"
+  "do"
+  "break"
+  "continue"
+] @keyword.repeat
+
+[
+  "try"
+  "catch"
+  "throw"
+] @keyword.exception
+
+[
+  "as"
+  "cast"
+  "in"
+  "new"
+] @keyword.operator
 
 [
   "abstract"
@@ -46,11 +60,10 @@
   "enum"
   "interface"
   "typedef"
-] @keyword.declaration
+] @keyword.type
 
 ["return"] @keyword.return
 ["function"] @keyword.function
-["as"] @keyword.operator
 
 [
   "public"
@@ -58,19 +71,22 @@
   "final"
   "inline"
   "override"
+  "overload"
   "static"
   "dynamic"
   "macro"
   "extern"
 ] @keyword.modifier
 (ClassType "abstract" @keyword.modifier)
+(ClassMethod "abstract" @keyword.modifier)
+
+(String) @string
+(String (escape_sequence) @string.escape)
+(String (interpolation) @string.special)
+(Regexp) @string.regexp
 
 (Int) @number
 (Float) @number.float
-(String (escape_sequence) @string.escape)
-(String (fragment) @string)
-(String (interpolation) @string.special)
-(Regexp) @string.regex
 
 (true) @boolean
 (false) @boolean
@@ -79,72 +95,45 @@
 (super) @variable.builtin
 (this) @variable.builtin
 
-(package_name) @namespace
+(package_name) @module
 
-[
- (import)
- (using)
-] @keyword.import
-
-(import
-  path: (package_name) @namespace
-  module: (type_name) @module)
+(import "import" @keyword.import)
+(using "using" @keyword.import)
 (import alias: (identifier) @type)
 (import sub: (identifier) @property)
 (import (wildcard) @constant)
 
-(using
-  path: (package_name) @namespace
-  type: (type_name) @type)
-
-;---------------------------------------------------
-
+; Types -----------------------------------------------------------------------
 
 (ComplexType "->" @keyword.operator)
+(ComplexType "&" @operator)
 
-(TypePath
-  pack: (package_name) @namespace
-  name: (type_name) @type
-  sub: (identifier) @property)
+(TypePath sub: (identifier) @property)
 
-(TypeParameter
-  name: (type_name) @type.parameter)
-(TypeParameter
-  name: (type_name) @type.parameter
-  [":"] @punctuation.delimiter
-  constraint: (ComplexType
-    (TypePath
-      name: (type_name) @type)))
+(TypeParameter name: (type_name) @type.parameter)
 
 (FunctionArg name: (identifier) @variable.parameter)
 (FunctionArg "=" @punctuation.special)
-
-
-(ComplexType "&" @operator)
+(FunctionTypeArg name: (identifier) @variable.parameter)
 
 ; Declarations ----------------------------------------------------------------
 
-[
-  (AbstractType)
-  (ClassType)
-  (EnumType)
-  (DefType)
-] @type.definition
+(AbstractType name: (type_name) @type.definition)
+(ClassType name: (type_name) @type.definition)
+(EnumType name: (type_name) @type.definition)
+(DefType name: (type_name) @type.definition)
 
-(ClassVar type: (ComplexType) @type)
+(ClassVar "=" @operator)
 (ClassVar
   (property_accessor
     get: (property_access) @property
     set: (property_access) @property))
 
-(ClassMethod
-  "function" @keyword.function
-  name: (identifier) @function.method)
+(ClassMethod name: (identifier) @function.method)
 (ClassMethod "macro" name: (identifier) @function.macro)
 
 (EnumConstructor name: (identifier) @constant)
 
-(TAnonymous) @type.builtin
 (Field name: (identifier) @variable.member)
 
 ; Expressions -----------------------------------------------------------------
@@ -155,55 +144,30 @@
 (ETernary ":" @operator)
 
 (EField name: (identifier) @property)
-(EField "." @punctuation.delimiter)
-(ECast type: (ComplexType) @type)
 (ECall callee: (identifier) @function.call)
 (ECall callee: (EField name: (identifier) @function.call))
-(EFor
-  key: (identifier) @variable
-  value: (identifier) @variable
-  var: (identifier) @variable
-)
 (EFunction name: (identifier) @function)
-(ENew (TypePath) @type)
 (EObjectDecl name: (identifier) @property)
 (EObjectDecl name: (String) @property)
-; (ETry (identifier) @variable)
-(ESwitch "switch" @keyword.control)
-(switch_case "case" @keyword.control)
-(switch_default "default" @keyword.control)
-(EThrow expr: (_) @keyword.exception)
 (EUntyped "untyped" @keyword.debug)
-(EVars
-  "final" @keyword
-  name: (identifier) @variable)
+(EVars "final" @keyword)
+(EVars "=" @operator)
 
-; macro reification -----------------------------------------------------------
+; Macros ----------------------------------------------------------------------
 
-"macro" @macro
-(macro (reification)) @macro
-(ClassMethod "macro" @keyword.modifier)
+(macro "macro" @keyword)
+(reification) @function.macro
+
+(type_trace "$type" @keyword.debug)
 
 ; Metadata --------------------------------------------------------------------
 
-(MetaDataEntry
-  [
-    "@" @attribute
-    ":" @attribute
-    name: (identifier) @attribute
-    params: (_) @attribute.parameter
-    "(" @punctuation.bracket
-    ")" @punctuation.bracket
-    (ECall callee: (EField name: (identifier) @function.call))
-  ])
+(MetaDataEntry "@" @attribute)
+(MetaDataEntry ":" @attribute)
+(MetaDataEntry name: (identifier) @attribute)
 
-(type_trace
-  "$type" @keyword.debug)
+; Conditional compilation -----------------------------------------------------
 
-[
-  (conditional)
-  (conditional_elseif)
-  (conditional_else)
-  (conditional_end)
-  (conditional_error)
-] @keyword.directive
+["#if" "#elseif" "#else" "#error"] @keyword.directive
+(conditional_end) @keyword.directive
+(compile_condition (identifier) @constant.macro)
